@@ -58,6 +58,7 @@ static bool fds_auto_insert;
 static bool overscan_v;
 static bool overscan_h;
 static unsigned aspect_ratio_mode;
+static bool show_crosshair;
 static unsigned tpulse;
 
 int16_t video_width = Api::Video::Output::WIDTH;
@@ -366,6 +367,7 @@ void retro_set_environment(retro_environment_t cb)
       { "nestopia_favored_system", "Favored System; auto|ntsc|pal|famicom|dendy" },
       { "nestopia_ram_power_state", "RAM Power-on State; 0x00|0xFF|random" },
       { "nestopia_turbo_pulse", "Turbo Pulse Speed; 2|3|4|5|6|7|8|9" },
+      { "nestopia_crosshair", "Show Lightgun crosshair; enabled|disabled" },
       { NULL, NULL },
    };
 
@@ -772,6 +774,16 @@ static void check_variables(void)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
       tpulse = atoi(var.value);
    
+   var.key = "nestopia_crosshair";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+     if (!strcmp(var.value, "disabled"))
+       show_crosshair = false;
+     else
+       show_crosshair = true;
+   }
+
    pitch = video_width * 4;
    
    renderState.filter = filter;
@@ -794,7 +806,7 @@ void retro_run(void)
    update_input();
    emulator.Execute(video, audio, input);
 
-   if (Api::Input(emulator).GetConnectedController(1) == 5)
+   if (show_crosshair && Api::Input(emulator).GetConnectedController(1) == 5)
       draw_crosshair(crossx, crossy);
    
    unsigned frames = is_pal ? 44100 / 50 : 44100 / 60;
